@@ -6,7 +6,6 @@ import (
 	"image/color"
 	"os"
 	"path"
-	"time"
 
 	"image/gif"
 
@@ -27,6 +26,7 @@ var Palette = []color.Color{
 	color.RGBA{0x00, 0x00, 0x00, 0xFF}, //9
 	color.RGBA{0x80, 0x80, 0x80, 0xFF}, //10
 	color.RGBA{0xa0, 0xa0, 0xa0, 0xFF}, //11
+	color.RGBA{0, 0, 0, 0},             //12 transparent
 }
 
 func main() {
@@ -39,13 +39,14 @@ func main() {
 
 	g, _ := giorengine.LoadReplay(file)
 
-	time.Sleep(5 * time.Second)
 	frames := []*image.Paletted{}
 	delays := []int{}
 	disposal := []byte{}
 	running := true
+	lastframe := image.NewPaletted(image.Rect(0, 0, g.Match.Width*10, g.Match.Height*10), Palette)
 	for running {
 		i := image.NewPaletted(image.Rect(0, 0, g.Match.Width*10, g.Match.Height*10), Palette)
+		optimized := image.NewPaletted(image.Rect(0, 0, g.Match.Width*10, g.Match.Height*10), Palette)
 		for x := 0; x < g.Match.Width; x++ {
 			for y := 0; y < g.Match.Height; y++ {
 				tileColor := Palette[8]
@@ -60,22 +61,27 @@ func main() {
 				}
 				for x2 := 0; x2 < 10; x2++ {
 					for y2 := 0; y2 < 10; y2++ {
+						color := tileColor
 						if cell.Type == giorengine.City && x2 > 2 && x2 < 7 && y2 > 2 && y2 < 7 {
-							i.Set(x*10+x2, y*10+y2, Palette[10])
+							color = Palette[10]
 						} else if cell.Type == giorengine.General && x2 > 2 && x2 < 7 && y2 > 2 && y2 < 7 {
-							i.Set(x*10+x2, y*10+y2, Palette[8])
-						} else {
-							i.Set(x*10+x2, y*10+y2, tileColor)
+							color = Palette[8]
 						}
+						i.Set(x*10+x2, y*10+y2, color)
+						if lastframe.At(x*10+x2, y*10+y2) == color {
+							color = Palette[12]
+						}
+						optimized.Set(x*10+x2, y*10+y2, color)
 					}
 				}
 			}
 		}
+		lastframe = i
 		delays = append(delays, 0)
-		frames = append(frames, i)
+		frames = append(frames, optimized)
 		disposal = append(disposal, gif.DisposalNone)
 		running = g.Step()
-		fmt.Print("Turn ", g.Turn, "\r")
+		//fmt.Print("Turn ", g.Turn, "\r")
 		/*f, _ := os.OpenFile(fmt.Sprintf("turn%d.gif", g.Turn), os.O_WRONLY|os.O_CREATE, 0600)
 		defer f.Close()
 		gif.Encode(f, i, nil)*/
@@ -84,7 +90,6 @@ func main() {
 	var extension = path.Ext(filename)
 	var name = filename[0 : len(filename)-len(extension)]
 	fmt.Println("Saving", name+".gif")
-	time.Sleep(10 * time.Second)
 	f, _ := os.Create(name + ".gif")
 	defer f.Close()
 	gif.EncodeAll(f, &gif.GIF{
