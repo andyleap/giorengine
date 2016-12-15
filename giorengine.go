@@ -184,10 +184,11 @@ func (g *Game) Step() bool {
 		f.AFK = true
 		g.afkPos++
 	}
+	action := len(g.moves) > 0
 	for len(g.moves) > 0 && g.moves[0].Turn <= g.Turn {
 		move := g.moves[0]
 		g.Move(move.Player, move.From, move.To, move.Is50)
 		g.moves = g.moves[1:]
 	}
-	return len(g.moves) > 0
+	return action
 }
