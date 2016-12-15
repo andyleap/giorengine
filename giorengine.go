@@ -165,7 +165,7 @@ type Move struct {
 	Turn     int
 }
 
-func (g *Game) Step() {
+func (g *Game) Step() bool {
 	g.PreTurn()
 	for g.afkPos < len(g.afks) && g.Turn == g.afks[g.afkPos][1] {
 		f := g.Factions[g.afks[g.afkPos][0]]
@@ -189,4 +189,5 @@ func (g *Game) Step() {
 		g.Move(move.Player, move.From, move.To, move.Is50)
 		g.moves = g.moves[1:]
 	}
+	return len(g.moves) > 0
 }
