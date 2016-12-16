@@ -92,8 +92,14 @@ func main() {
 					linVal := float64(cell.Pop) / float64(maxArmy)
 					popVal = int(math.Floor((logVal + linVal) * 8))
 				}
+				if popVal > 15 {
+					popVal = 15
+				}
+				if cell.Faction == nil && popVal == 0 {
+					popVal = 15
+				}
 				//size := popVal / 4
-				popColor := Palette[13+(15-popVal)]
+				popColor := Palette[13+(popVal)]
 				for x2 := 0; x2 < 10; x2++ {
 					for y2 := 0; y2 < 10; y2++ {
 						color := tileColor
